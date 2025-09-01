@@ -11,10 +11,11 @@ import {
   Target,
   Calendar,
   DollarSign,
-  Sparkles
+  Sparkles,
+  X,
+  CheckCircle
 } from 'lucide-react';
 import BrandrLogo from './BrandrLogo';
-import CampaignCreationFlow from './CampaignCreationFlow';
 import CampaignDetailsModal from './CampaignDetailsModal';
 
 interface DashboardProps {
@@ -22,27 +23,23 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
-  console.log('Dashboard component rendering');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
-  const [showCampaignCreationFlow, setShowCampaignCreationFlow] = useState(false);
-  const [showCampaignDetails, setShowCampaignDetails] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showCampaignTypes, setShowCampaignTypes] = useState(false);
   const [selectedCampaignType, setSelectedCampaignType] = useState<string>('');
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [campaignBudget, setCampaignBudget] = useState(5000);
+  const [showCampaignDetails, setShowCampaignDetails] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  
+  // Brand DNA state
   const [brandDnaData, setBrandDnaData] = useState({
     websiteUrl: '',
     isAnalyzing: false,
     analysis: null as any
   });
-  const [campaignAnswers, setCampaignAnswers] = useState<Record<string, string>>({});
-  const [chatStep, setChatStep] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
-  const [attachments, setAttachments] = useState<File[]>([]);
+
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([
     {
       id: 'test-1',
@@ -57,7 +54,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       expectedClicks: '1.2K - 3.5K'
     }
   ]);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -68,71 +64,67 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const campaignQuestions = [
+  const campaignTypes = [
     {
-      key: 'goal',
-      prompt: "What's the main goal of this campaign? (e.g., sales, awareness, traffic)"
+      id: 'clipping',
+      emoji: '🎬',
+      title: 'Clipping',
+      description: 'Repurpose existing content into engaging clips and highlights'
     },
     {
-      key: 'creators',
-      prompt: "What kind of creators do you picture running this? (e.g., fitness, fashion, tech)"
+      id: 'retranscription',
+      emoji: '📝',
+      title: 'Retranscription',
+      description: 'Scripted creator reviews with detailed talking points'
     },
     {
-      key: 'platforms',
-      prompt: "Which platform(s) should they post on? (e.g., TikTok, Instagram, YouTube)"
+      id: 'act-review',
+      emoji: '📦',
+      title: 'Act Review',
+      description: 'Send products to creators for authentic unboxing and reviews'
     },
     {
-      key: 'audience',
-      prompt: "Who are you hoping to reach? Describe your ideal audience."
-    },
-    {
-      key: 'budget',
-      prompt: "What budget do you have in mind for this campaign?"
-    },
-    {
-      key: 'dates',
-      prompt: "When do you want the campaign to start and finish?"
-    },
-    {
-      key: 'guidelines',
-      prompt: "Do you have any brand guidelines or specific messaging you want the creators to follow?"
+      id: 'store-visit',
+      emoji: '🏬',
+      title: 'Store Visit',
+      description: 'Creators visit your physical location to film content'
     }
   ];
 
   const openCampaignBuilder = () => {
-    console.log('Create Campaign button clicked');
     setShowCampaignTypes(true);
   };
 
-  const handleCampaignCreated = (campaign: any) => {
-    console.log('Campaign created:', campaign);
-    setActiveCampaigns(prev => {
-      const newCampaigns = [...prev, campaign];
-      console.log('Updated campaigns:', newCampaigns);
-      return newCampaigns;
-    });
+  const handleCampaignTypeSelect = (type: string) => {
+    setSelectedCampaignType(type);
+    setShowCampaignTypes(false);
+    setShowCampaignWizard(true);
+    setWizardStep(1);
   };
 
-  const handleCampaignClick = (campaign: any) => {
-    console.log('Campaign clicked:', campaign);
-    setSelectedCampaign(campaign);
-    setShowCampaignDetails(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      setAttachments(prev => [...prev, ...Array.from(files)]);
-      Array.from(files).forEach(file => {
-        // This part of the logic is no longer needed for the chatbot,
-        // but keeping it as it might be reused or for future context.
-        // setChatMessages(msgs => [
-        //   ...msgs,
-        //   { id: `file-${Date.now()}-${file.name}`, sender: 'user', text: file.name, type: 'attachment', file }
-        // ]);
-      });
-    }
-    if (chatInputRef.current) chatInputRef.current.focus();
+  const handleBrandDnaAnalysis = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brandDnaData.websiteUrl.trim()) return;
+    
+    setBrandDnaData(prev => ({ ...prev, isAnalyzing: true }));
+    
+    // Simulate AI analysis
+    setTimeout(() => {
+      setBrandDnaData(prev => ({
+        ...prev,
+        isAnalyzing: false,
+        analysis: {
+          niche: 'B2B SaaS & Creator Marketing',
+          targetMarket: 'Startup founders and marketing teams (25-45 years old)',
+          insights: [
+            'Focus on ROI-driven messaging',
+            'Emphasize authentic partnerships over traditional advertising',
+            'Target tech-savvy entrepreneurs who value data-driven decisions',
+            'Highlight time-saving and efficiency benefits'
+          ]
+        }
+      }));
+    }, 2000);
   };
 
   const handlePublishCampaign = () => {
@@ -183,50 +175,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     return num.toString();
   };
 
-  const handleCampaignTypeSelect = (type: string) => {
-    setSelectedCampaignType(type);
-    setShowCampaignTypes(false);
-    setShowCampaignWizard(true);
+  const handleCampaignClick = (campaign: any) => {
+    setSelectedCampaign(campaign);
+    setShowCampaignDetails(true);
   };
 
-  const handleBrandDnaAnalysis = async () => {
-    if (!brandDnaData.websiteUrl.trim()) return;
-    
-    setBrandDnaData(prev => ({ ...prev, isAnalyzing: true }));
-    
-    // Simulate AI analysis
-    setTimeout(() => {
-      setBrandDnaData(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        analysis: {
-          niche: 'B2B SaaS & Creator Marketing',
-          targetMarket: 'Startup founders and marketing teams (25-45 years old)',
-          insights: [
-            'Focus on ROI-driven messaging',
-            'Emphasize authentic partnerships over traditional advertising',
-            'Target tech-savvy entrepreneurs who value data-driven decisions',
-            'Highlight time-saving and efficiency benefits'
-          ]
-        }
-      }));
-    }, 2000);
+  const getBudgetPercentage = () => {
+    const min = Math.log(500);
+    const max = Math.log(50000);
+    const current = Math.log(campaignBudget);
+    return ((current - min) / (max - min)) * 100;
   };
 
-  const getExpectedMetrics = () => {
-    const budget = parseFloat(campaignAnswers.budget?.replace(/[^\d.]/g, '') || '0');
-    const platforms = (campaignAnswers.platforms || '').toLowerCase();
-    let reach = budget * 100; // Base calculation
-    let engagementRate = 2.5; // Base rate
-    
-    if (platforms.includes('instagram')) engagementRate = 3.2;
-    if (platforms.includes('tiktok')) engagementRate = 4.1;
-    if (platforms.includes('youtube')) engagementRate = 2.8;
-    
-    return {
-      reach: Math.round(reach),
-      engagementRate: engagementRate.toFixed(1) + '%',
-    };
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const percentage = parseInt(e.target.value);
+    const min = Math.log(500);
+    const max = Math.log(50000);
+    const scale = (max - min) / 100;
+    const budget = Math.round(Math.exp(min + scale * percentage));
+    setCampaignBudget(budget);
   };
 
   return (
@@ -361,7 +328,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     <h3 className="text-lg font-semibold text-gray-900">Active Campaigns</h3>
                     <Target className="w-6 h-6 text-blue-600" />
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-2">3</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-2">{activeCampaigns.length}</p>
                   <p className="text-sm text-emerald-600">+1 from last week</p>
                 </div>
                 
@@ -389,9 +356,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                   <p className="text-sm text-emerald-600">+0.5% from last month</p>
                 </div>
               </div>
-
-              {/* Recent Activity */}
-              {/* The Recent Activity section is removed as per the edit hint. */}
             </div>
           )}
 
@@ -418,7 +382,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       <div 
                         key={campaign.id} 
                         className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
-                          campaign.status === 'Draft'
+                          campaign.status === 'draft'
                             ? 'bg-yellow-50 border-yellow-200 hover:border-yellow-300 hover:shadow-md opacity-80'
                             : 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md'
                         }`}
@@ -427,7 +391,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-semibold text-gray-900">{campaign.title}</h4>
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            campaign.status === 'Draft' 
+                            campaign.status === 'draft' 
                               ? 'bg-yellow-100 text-yellow-700' 
                               : 'bg-emerald-100 text-emerald-700'
                           }`}>
@@ -466,7 +430,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 <h3 className="text-2xl font-semibold text-gray-900 mb-6">Analyze Your Brand DNA</h3>
                 <p className="text-gray-600 mb-8">Enter your website URL and our AI will analyze your brand identity to help create better-targeted campaigns.</p>
                 
-                <div className="max-w-md">
+                <form onSubmit={handleBrandDnaAnalysis} className="max-w-md">
                   <div className="flex space-x-4">
                     <input
                       type="url"
@@ -475,16 +439,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       placeholder="https://yourwebsite.com"
                       className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={brandDnaData.isAnalyzing}
+                      required
                     />
                     <button
-                      onClick={handleBrandDnaAnalysis}
+                      type="submit"
                       disabled={!brandDnaData.websiteUrl.trim() || brandDnaData.isAnalyzing}
                       className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {brandDnaData.isAnalyzing ? 'Analyzing...' : 'Analyze'}
                     </button>
                   </div>
-                </div>
+                </form>
 
                 {brandDnaData.isAnalyzing && (
                   <div className="mt-8 text-center">
@@ -553,57 +518,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         </div>
       </div>
 
-
-
-      {/* Campaign Summary Modal */}
-      {showSummary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Campaign Summary</h2>
-              <p className="text-gray-600 mt-1">Review your campaign before publishing</p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {campaignQuestions.map(q => (
-                <div key={q.key} className="border-b border-gray-100 pb-4">
-                  <div className="text-gray-500 text-sm mb-1">{q.prompt}</div>
-                  <div className="text-gray-900 font-medium">{campaignAnswers[q.key] || 'Not specified'}</div>
-                </div>
-              ))}
-              
-              {attachments.length > 0 && (
-                <div className="mt-6">
-                  <div className="text-gray-500 text-sm mb-2">Attached Content</div>
-                  <ul className="space-y-2">
-                    {attachments.map((file, i) => (
-                      <li key={i} className="text-blue-600 text-sm">{file.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-                <div className="font-semibold text-blue-900 mb-2">Expected Metrics</div>
-                <div className="text-sm text-blue-800">
-                  <div>Estimated Reach: {getExpectedMetrics().reach.toLocaleString()} impressions</div>
-                  <div>Estimated Engagement Rate: {getExpectedMetrics().engagementRate}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-gray-200">
-              <button
-                className="w-full px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all duration-200"
-                onClick={handlePublishCampaign}
-              >
-                Publish Campaign
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Campaign Type Selection Modal */}
       {showCampaignTypes && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -622,41 +536,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             </div>
             
             <div className="grid grid-cols-2 gap-6">
-              <button
-                onClick={() => handleCampaignTypeSelect('Clipping')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
-              >
-                <div className="text-4xl mb-4">🎬</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">Clipping</h3>
-                <p className="text-gray-600 text-sm">Repurpose existing content into engaging clips and highlights</p>
-              </button>
-              
-              <button
-                onClick={() => handleCampaignTypeSelect('Retranscription')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
-              >
-                <div className="text-4xl mb-4">📝</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">Retranscription</h3>
-                <p className="text-gray-600 text-sm">Scripted creator reviews with detailed talking points</p>
-              </button>
-              
-              <button
-                onClick={() => handleCampaignTypeSelect('Act Review')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
-              >
-                <div className="text-4xl mb-4">📦</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">Act Review</h3>
-                <p className="text-gray-600 text-sm">Send products to creators for authentic unboxing and reviews</p>
-              </button>
-              
-              <button
-                onClick={() => handleCampaignTypeSelect('Store Visit')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
-              >
-                <div className="text-4xl mb-4">🏬</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">Store Visit</h3>
-                <p className="text-gray-600 text-sm">Creators visit your physical location to film content</p>
-              </button>
+              {campaignTypes.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => handleCampaignTypeSelect(type.title)}
+                  className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group"
+                >
+                  <div className="text-4xl mb-4">{type.emoji}</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">{type.title}</h3>
+                  <p className="text-gray-600 text-sm">{type.description}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -707,18 +597,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                       type="range"
                       min="0"
                       max="100"
-                      value={((Math.log(campaignBudget) - Math.log(500)) / (Math.log(50000) - Math.log(500))) * 100}
-                      onChange={(e) => {
-                        const percentage = parseInt(e.target.value);
-                        const min = Math.log(500);
-                        const max = Math.log(50000);
-                        const scale = (max - min) / 100;
-                        const budget = Math.round(Math.exp(min + scale * percentage));
-                        setCampaignBudget(budget);
-                      }}
+                      value={getBudgetPercentage()}
+                      onChange={handleBudgetChange}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       style={{
-                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((Math.log(campaignBudget) - Math.log(500)) / (Math.log(50000) - Math.log(500))) * 100}%, #e5e7eb ${((Math.log(campaignBudget) - Math.log(500)) / (Math.log(50000) - Math.log(500))) * 100}%, #e5e7eb 100%)`
+                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${getBudgetPercentage()}%, #e5e7eb ${getBudgetPercentage()}%, #e5e7eb 100%)`
                       }}
                     />
                     
@@ -865,14 +748,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             )}
           </div>
         </div>
-      )}
-
-      {/* Campaign Creation Flow */}
-      {showCampaignCreationFlow && (
-        <CampaignCreationFlow
-          onClose={() => setShowCampaignCreationFlow(false)}
-          onCampaignCreated={handleCampaignCreated}
-        />
       )}
 
       {/* Campaign Details Modal */}
